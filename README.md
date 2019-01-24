@@ -13,9 +13,6 @@ Simulates objects captured by Baxter's camera in 3D using OpenCV and Bullet.
 
 
 ## About
-This is a top-to-bottom implementation of a Baxter autonomously executing the
-GRMMO algorithm implemented [here](https://github.com/ardabbour/grmmo).
-
 This repository is a Catkin ROS package that contains several scripts that:
 - help find the HSV values needed for simple color filtering,
 - simplify the usage of main Baxter functions,
