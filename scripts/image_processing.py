@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
-    BAXTER IMAGINATION
-    https://github.com/ardabbour/baxter-imagination/
+    EASY BAXTER
+    https://github.com/ardabbour/easy-baxter/
 
     Abdul Rahman Dabbour
     Cognitive Robotics Laboratory
@@ -14,8 +14,10 @@
 from argparse import ArgumentParser
 from itertools import repeat
 
-import roslib
+
 import rospy
+import roslib
+import rospkg
 from rospy.numpy_msg import numpy_msg
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
@@ -24,8 +26,11 @@ from rospy_tutorials.msg import Floats
 import cv2
 import numpy as np
 
-import simple_baxter as sb
+import easy_baxter as eb
 
+PKG = 'easy_baxter'
+roslib.load_manifest(PKG)
+PKG_DIR = rospkg.RosPack().get_path(PKG)
 
 # Actual ROI dimentions measured in cm; this changes depending on depth
 ACTUAL_WIDTH = 43
@@ -142,8 +147,8 @@ def process_image(raw):
     cropped_height = float(vertical[1] - vertical[0])
     dimensions = [cropped_width, cropped_height]
 
-    width_scale = actual_width/cropped_width
-    height_scale = actual_height/cropped_height
+    width_scale = ACTUAL_WIDTH/cropped_width
+    height_scale = ACTUAL_HEIGHT/cropped_height
     scale = [width_scale, height_scale]
 
     # Crop image to ROI
@@ -196,7 +201,7 @@ def process_image(raw):
 def init_camera(camera_name):
     """Initializes the camera."""
 
-    camera = sb.Camera(camera_name)
+    camera = eb.Camera(camera_name)
     camera.fps = 25
     camera.resolution = (640, 400)
     camera.open()
@@ -209,6 +214,9 @@ def main(node, publisher, camera):
     """Creates image processing node and keeps it running."""
 
     rospy.init_node(node)
+
+    # Smile!
+    eb.display_image(PKG_DIR + '/smiley.jpg')
 
     # Create publisher
     pub_cubes = rospy.Publisher(
@@ -248,7 +256,7 @@ if __name__ == "__main__":
     PARSER = ArgumentParser()
     PARSER.add_argument("--publisher", "-p",
                         help="ROS topic to publish to",
-                        default="/baxter_imagination/arrangement",
+                        default="/easy_baxter/arrangement",
                         type=str)
     PARSER.add_argument("--camera", "-c",
                         help="Camera name",
@@ -256,7 +264,7 @@ if __name__ == "__main__":
                         type=str)
     PARSER.add_argument("--node_name", "-n",
                         help="Node name",
-                        default="BaxterImaginationImageProcessor",
+                        default="image_processing",
                         type=str)
     ARGS = PARSER.parse_args()
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
-    BAXTER IMAGINATION
-    https://github.com/ardabbour/baxter-imagination/
+    EASY BAXTER
+    https://github.com/ardabbour/easy-baxter/
 
     Abdul Rahman Dabbour
     Cognitive Robotics Laboratory
@@ -14,12 +14,20 @@
 from argparse import ArgumentParser
 from itertools import repeat
 
+import cv2
+import numpy as np
+
 import rospy
+import roslib
+import rospkg
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
 
-import cv2
-import numpy as np
+import easy_baxter as eb
+
+PKG = 'easy_baxter'
+roslib.load_manifest(PKG)
+PKG_DIR = rospkg.RosPack().get_path(PKG)
 
 
 def nothing(_):
@@ -56,6 +64,9 @@ def main(node_name, subscriber):
 
     # Initialize node
     rospy.init_node(node_name)
+
+    # Smile!
+    eb.display_image(PKG_DIR + '/smiley.jpg')
 
     # Initialize CV Bridge
     bridge = CvBridge()
@@ -127,11 +138,18 @@ def main(node_name, subscriber):
         result_mask2 = cv2.bitwise_and(raw, raw, mask=mask2)
 
         mask1_or_mask2 = cv2.bitwise_or(mask1, mask2)
+        mask1_and_mask2 = cv2.bitwise_and(mask1, mask2)
         result_mask1_or_mask2 = cv2.bitwise_and(raw, raw, mask=mask1_or_mask2)
+        result_mask1_and_mask2 = cv2.bitwise_and(raw, raw, mask=mask1_and_mask2)
 
+        cv2.namedWindow('Mask 1', cv2.WINDOW_NORMAL)
         cv2.imshow('Mask 1', result_mask1)
+        cv2.namedWindow('Mask 2', cv2.WINDOW_NORMAL)
         cv2.imshow('Mask 2', result_mask2)
+        cv2.namedWindow('Mask 1 OR Mask 2', cv2.WINDOW_NORMAL)
         cv2.imshow('Mask 1 OR Mask 2', result_mask1_or_mask2)
+        cv2.namedWindow('Mask 1 AND Mask 2', cv2.WINDOW_NORMAL)
+        cv2.imshow('Mask 1 AND Mask 2', result_mask1_and_mask2)
         k = cv2.waitKey(10)
         if k == 27:
             rospy.signal_shutdown("Esc pressed. Goodbye.")
@@ -139,13 +157,13 @@ def main(node_name, subscriber):
 
 if __name__ == "__main__":
     PARSER = ArgumentParser()
-    PARSER.add_argument("--subscribe", "-s",
-                        help="ROS topic to subcribe to (str)",
-                        default="/cameras/left_hand_camera/image",
-                        type=str)
     PARSER.add_argument("--node", "-n",
-                        help="Node name (str)",
-                        default="CameraCalibration",
+                        help="Node name",
+                        default="camera_calibration",
+                        type=str)
+    PARSER.add_argument("--subscribe", "-s",
+                        help="ROS topic to subcribe to",
+                        default="/cameras/left_hand_camera/image",
                         type=str)
     ARGS = PARSER.parse_args()
 
