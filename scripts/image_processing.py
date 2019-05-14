@@ -78,7 +78,7 @@ def detect(image, dimensions, scale):
 
     # Contouring
     detected = []
-    _, contours, _ = cv2.findContours(
+    contours, _ = cv2.findContours(
         canny, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     for i in contours:
         if cv2.contourArea(i) > 1000.0:
