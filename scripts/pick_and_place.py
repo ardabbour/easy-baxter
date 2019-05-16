@@ -27,6 +27,7 @@ PKG = 'easy_baxter'
 roslib.load_manifest(PKG)
 PKG_DIR = rospkg.RosPack().get_path(PKG)
 
+
 def normalize(num, lower=0.0, upper=360.0, b=False):
     """Normalize number to range [lower, upper) or [lower, upper]."""
 
@@ -62,9 +63,9 @@ def normalize(num, lower=0.0, upper=360.0, b=False):
 
     return res
 
+
 def obtain_arrangement(subscriber):
     """Obtains the arrangment matrix from the specified ROS topic."""
-
 
     cubes = rospy.wait_for_message(
         subscriber + "/cubes", numpy_msg(Floats)).data.tolist()
@@ -96,6 +97,7 @@ def main(node, subscriber, arm, initial_pose, gripper_height, x_offset, y_offset
     # Initialize robot and move selected arm to correct pose.
     eb.enable_robot()
     limb = eb.Arm(arm)
+    # initial_pose = [0.35, 0.85, 0.15, np.pi, 0.0, 0]
     limb.move_to_pose(initial_pose)
 
     # Smile!
@@ -108,10 +110,13 @@ def main(node, subscriber, arm, initial_pose, gripper_height, x_offset, y_offset
         for body in group:
             pick_x = (body[1]/100.0) + initial_pose[0] + x_offset
             pick_y = (body[0]/100.0) + initial_pose[1] + y_offset
-            pick_theta = normalize(body[-1] + theta_offset, -np.pi/2.0, np.pi/2.0)
+            pick_theta = normalize(
+                body[-1] + theta_offset, -np.pi/2.0, np.pi/2.0)
 
-            pick_pose = [pick_x, pick_y, initial_pose[2] - gripper_height, np.pi, 0.0, pick_theta]
-            place_pose = [pick_pose[0]-0.1, pick_pose[1], initial_pose[2] - gripper_height, np.pi, 0.0, pick_theta]
+            pick_pose = [pick_x, pick_y, initial_pose[2] -
+                         gripper_height, np.pi, 0.0, pick_theta]
+            place_pose = [pick_pose[0]-0.1, pick_pose[1],
+                          initial_pose[2] - gripper_height, np.pi, 0.0, pick_theta]
 
             limb.pick_and_place(pick_pose, place_pose)
     limb.move_to_pose(initial_pose)
@@ -156,4 +161,5 @@ if __name__ == "__main__":
 
     ARGS = PARSER.parse_args()
 
-    main(ARGS.node, ARGS.subscriber, ARGS.arm, ARGS.initial_pose, ARGS.gripper_height, ARGS.x_offset, ARGS.y_offset, ARGS.theta_offset)
+    main(ARGS.node, ARGS.subscriber, ARGS.arm, ARGS.initial_pose,
+         ARGS.gripper_height, ARGS.x_offset, ARGS.y_offset, ARGS.theta_offset)

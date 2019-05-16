@@ -44,7 +44,7 @@ LOWER_YELLOW = np.array([5, 60, 75])
 UPPER_YELLOW = np.array([40, 130, 255])
 
 # Some colors, like red, use an OR filter to capture the entire range
-LOWER_RED_1 = np.array([0, 145, 0])
+LOWER_RED_1 = np.array([0, 70, 0])
 UPPER_RED_1 = np.array([15, 255, 255])
 LOWER_RED_2 = np.array([150, 105, 0])
 UPPER_RED_2 = np.array([179, 255, 255])

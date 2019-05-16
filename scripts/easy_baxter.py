@@ -12,6 +12,7 @@
 """
 
 import sys
+import time
 
 import cv2
 import numpy as np
@@ -183,4 +184,5 @@ class Arm(bxtr.Limb):
         self.move_to_pose(above_place)
         self.move_to_pose(place_pose)
         self.grip.open()
+        time.sleep(0.2)
         self.move_to_pose(above_place)
