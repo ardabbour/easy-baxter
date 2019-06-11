@@ -34,22 +34,22 @@ def obtain_arrangement(subscriber):
 
     cubes = rospy.wait_for_message(
         subscriber + "/cubes", numpy_msg(Floats)).data.tolist()
-    cuboids = rospy.wait_for_message(
-        subscriber + "/cuboids", numpy_msg(Floats)).data.tolist()
-    long_cuboids = rospy.wait_for_message(
-        subscriber + "/long_cuboids", numpy_msg(Floats)).data.tolist()
+    cylinders = rospy.wait_for_message(
+        subscriber + "/cylinders", numpy_msg(Floats)).data.tolist()
+    pluses = rospy.wait_for_message(
+        subscriber + "/pluses", numpy_msg(Floats)).data.tolist()
 
     cubes = [round(elem, 2) for elem in cubes]
     cubes = [cubes[x:x+6] for x in range(0, len(cubes), 6)]
 
-    cuboids = [round(elem, 2) for elem in cuboids]
-    cuboids = [cuboids[x:x+6] for x in range(0, len(cuboids), 6)]
+    cylinders = [round(elem, 2) for elem in cylinders]
+    cylinders = [cylinders[x:x+6] for x in range(0, len(cylinders), 6)]
 
-    long_cuboids = [round(elem, 2) for elem in long_cuboids]
-    long_cuboids = [long_cuboids[x:x+6]
-                    for x in range(0, len(long_cuboids), 6)]
+    pluses = [round(elem, 2) for elem in pluses]
+    pluses = [pluses[x:x+6]
+              for x in range(0, len(pluses), 6)]
 
-    return [cubes, cuboids, long_cuboids]
+    return [cubes, cylinders, pluses]
 
 
 def create_sim(arrangement):
@@ -64,13 +64,13 @@ def create_sim(arrangement):
             j[5] = round((j[5] + 1.57), 2)
     for i, val in enumerate(arrangement):
         if i == 0:
-            file_name = URDF_DIR + "cube_act.urdf"
-            color = [0, 0, 1, 1]
+            file_name = URDF_DIR + "plus.urdf"
+            color = [0, 1, 0, 1]
         elif i == 1:
-            file_name = URDF_DIR + "cuboid_act.urdf"
+            file_name = URDF_DIR + "cylinder.urdf"
             color = [1, 1, 0, 1]
         elif i == 2:
-            file_name = URDF_DIR + "cuboid_long_act.urdf"
+            file_name = URDF_DIR + "cube.urdf"
             color = [1, 0, 0, 1]
         for j in val:
             loaded = p.loadURDF(
@@ -98,7 +98,7 @@ def main(node, subscriber):
     p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
     p.configureDebugVisualizer(p.COV_ENABLE_SHADOWS, 0)
     p.resetDebugVisualizerCamera(3, 180, -89.99, [0, 0, 0])
-    surface = p.loadURDF(URDF_DIR + "surface_act.urdf", useFixedBase=True)
+    surface = p.loadURDF(URDF_DIR + "surface.urdf", useFixedBase=True)
     p.changeVisualShape(surface, -1, rgbaColor=[1, 1, 1, 1])
 
     arrangement = obtain_arrangement(subscriber)
@@ -119,13 +119,6 @@ def main(node, subscriber):
                 p.removeBody(i)
             loaded_body_ids = create_sim(arrangement)
         rate.sleep()
-
-    while flag:
-        char = eb.get_char(5)
-        if char in ['\x1b', '\x03']:
-            flag = False
-            p.disconnect()
-            rospy.signal_shutdown("Shutting down.")
 
 if __name__ == "__main__":
     PARSER = ArgumentParser()

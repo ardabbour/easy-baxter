@@ -40,14 +40,27 @@ ACTUAL_HEIGHT = 20
 LOWER_BLUE = np.array([30, 50, 10])
 UPPER_BLUE = np.array([160, 255, 120])
 
+LOWER_GREEN = np.array([80, 100, 0])
+UPPER_GREEN = np.array([130, 255, 255])
+
 LOWER_YELLOW = np.array([5, 60, 75])
 UPPER_YELLOW = np.array([40, 130, 255])
 
 # Some colors, like red, use an OR filter to capture the entire range
 LOWER_RED_1 = np.array([0, 70, 0])
-UPPER_RED_1 = np.array([15, 255, 255])
-LOWER_RED_2 = np.array([150, 105, 0])
+UPPER_RED_1 = np.array([10, 255, 255])
+LOWER_RED_2 = np.array([150, 70, 50])
 UPPER_RED_2 = np.array([179, 255, 255])
+
+# Camera settings
+FPS = 15
+GAIN = 40
+EXPOSURE = 80
+RESOLUTION = (640, 400)
+WHITE_BALANCE_RED = -1
+WHITE_BALANCE_BLUE = -1
+WHITE_BALANCE_GREEN = -1
+
 
 def get_angle(rect_points):
     """Get the angle from the long edge to avoid confusion!"""
@@ -92,7 +105,7 @@ def detect(image, dimensions, scale):
             center_y = float(moments['m01']/moments['m00']) - dimensions[1]/2.0
             center_y = round(center_y * scale[1], 2)
 
-            # Angle Calculation for theta coordinate
+        # Angle Calculation for theta coordinate
             angle = round(get_angle(box_points), 2)
 
             detected.append([[center_x, center_y, 6.5], [0.0, 0.0, angle]])
@@ -100,7 +113,7 @@ def detect(image, dimensions, scale):
                 image, [np.intp(box_points)], 0, (255, 255, 255), 2)
     cv2.namedWindow('Detection', cv2.WINDOW_NORMAL)
     cv2.imshow('Detection', image)
-    cv2.waitKey(5)
+    cv2.waitKey(50)
 
     return detected
 
@@ -176,11 +189,17 @@ def process_image(raw):
     mask_r = cv2.erode(mask_r, kernel, iterations=3)
     res_r = cv2.bitwise_and(image, image, mask=mask_r)
 
-    # Blue thresholding
-    mask_b = cv2.inRange(hsv, LOWER_BLUE, UPPER_BLUE)
-    mask_b = cv2.dilate(mask_b, kernel, iterations=2)
-    mask_b = cv2.erode(mask_b, kernel, iterations=3)
-    res_b = cv2.bitwise_and(image, image, mask=mask_b)
+    # # Blue thresholding
+    # mask_b = cv2.inRange(hsv, LOWER_BLUE, UPPER_BLUE)
+    # mask_b = cv2.dilate(mask_b, kernel, iterations=2)
+    # mask_b = cv2.erode(mask_b, kernel, iterations=3)
+    # res_b = cv2.bitwise_and(image, image, mask=mask_b)
+
+    # Green thresholding
+    mask_g = cv2.inRange(hsv, LOWER_GREEN, UPPER_GREEN)
+    mask_g = cv2.dilate(mask_g, kernel, iterations=2)
+    mask_g = cv2.erode(mask_g, kernel, iterations=3)
+    res_g = cv2.bitwise_and(image, image, mask=mask_g)
 
     # Yellow thresholding
     mask_y = cv2.inRange(hsv, LOWER_YELLOW, UPPER_YELLOW)
@@ -188,12 +207,13 @@ def process_image(raw):
     mask_y = cv2.erode(mask_y, kernel, iterations=3)
     res_y = cv2.bitwise_and(image, image, mask=mask_y)
 
-    cubes = detect(res_b, dimensions, scale)
+    cubes = detect(res_g, dimensions, scale)
     cuboids = detect(res_y, dimensions, scale)
     long_cuboids = detect(res_r, dimensions, scale)
 
     # Combine all thresholded images
-    combined = res_r + res_b + res_y
+    # combined = res_r + res_b + res_y
+    combined = res_r + res_g + res_y
 
     return [cubes, cuboids, long_cuboids], combined
 
@@ -202,8 +222,22 @@ def init_camera(camera_name):
     """Initializes the camera."""
 
     camera = eb.Camera(camera_name)
-    camera.fps = 25
-    camera.resolution = (640, 400)
+
+    if FPS > -1:
+        camera.fps = FPS
+    if GAIN > -1:
+        camera.gain = GAIN
+    if EXPOSURE > -1:
+        camera.exposure = EXPOSURE
+    if RESOLUTION > -1:
+        camera.resolution = RESOLUTION
+    if WHITE_BALANCE_RED > -1:
+        camera.white_balance_red = WHITE_BALANCE_RED
+    if WHITE_BALANCE_BLUE > -1:
+        camera.white_balance_blue = WHITE_BALANCE_BLUE
+    if WHITE_BALANCE_GREEN > -1:
+        camera.white_balance_green = WHITE_BALANCE_GREEN
+
     camera.open()
 
     # Camera needs time to adjust its white balance
@@ -221,10 +255,10 @@ def main(node, publisher, camera):
     # Create publisher
     pub_cubes = rospy.Publisher(
         publisher + '/cubes', numpy_msg(Floats), queue_size=10)
-    pub_cuboids = rospy.Publisher(
-        publisher + '/cuboids', numpy_msg(Floats), queue_size=10)
-    pub_long_cuboids = rospy.Publisher(
-        publisher + '/long_cuboids', numpy_msg(Floats), queue_size=10)
+    pub_cylinders = rospy.Publisher(
+        publisher + '/cylinders', numpy_msg(Floats), queue_size=10)
+    pub_pluses = rospy.Publisher(
+        publisher + '/pluses', numpy_msg(Floats), queue_size=10)
     pub_img = rospy.Publisher(
         '/cameras/' + camera + '/image/processed', Image, queue_size=1)
 
@@ -243,13 +277,13 @@ def main(node, publisher, camera):
 
         img_msg = bridge.cv2_to_imgmsg(processed, encoding="bgr8")
         cubes_msg = np.array(arrangement[0], dtype=np.float32).flatten()
-        cuboids_msg = np.array(arrangement[1], dtype=np.float32).flatten()
-        long_cuboids_msg = np.array(arrangement[2], dtype=np.float32).flatten()
+        cylinders_msg = np.array(arrangement[1], dtype=np.float32).flatten()
+        pluses_msg = np.array(arrangement[2], dtype=np.float32).flatten()
 
         pub_img.publish(img_msg)
         pub_cubes.publish(cubes_msg)
-        pub_cuboids.publish(cuboids_msg)
-        pub_long_cuboids.publish(long_cuboids_msg)
+        pub_cylinders.publish(cylinders_msg)
+        pub_pluses.publish(pluses_msg)
 
 
 if __name__ == "__main__":

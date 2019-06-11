@@ -105,7 +105,7 @@ def main(node, subscriber, arm, initial_pose, gripper_height, x_offset, y_offset
 
     arrangement = obtain_arrangement(subscriber)
 
-    # Simply place all objects 0.1m behind where they are
+    # Simply place all objects 0.25m behind where they are
     for group in arrangement:
         for body in group:
             pick_x = (body[1]/100.0) + initial_pose[0] + x_offset
@@ -115,7 +115,7 @@ def main(node, subscriber, arm, initial_pose, gripper_height, x_offset, y_offset
 
             pick_pose = [pick_x, pick_y, initial_pose[2] -
                          gripper_height, np.pi, 0.0, pick_theta]
-            place_pose = [pick_pose[0]-0.1, pick_pose[1],
+            place_pose = [pick_pose[0]-0.25, pick_pose[1],
                           initial_pose[2] - gripper_height, np.pi, 0.0, pick_theta]
 
             limb.pick_and_place(pick_pose, place_pose)
@@ -144,7 +144,7 @@ if __name__ == "__main__":
                         type=list)
     PARSER.add_argument("--gripper_height", "-g",
                         help="Distance of end-effector from picking pose in m.",
-                        default=0.18,
+                        default=0.172,
                         type=float)
     PARSER.add_argument("--x_offset", "-x",
                         help="X offset from camera-detection frame to end-effector frame in m.",

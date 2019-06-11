@@ -204,3 +204,4 @@ CATKIN_IGNORE
 # ---------------------------------- CUSTOM ---------------------------------- #
 # Editors
 .vscode/
+XDG_CACHE_HOME/

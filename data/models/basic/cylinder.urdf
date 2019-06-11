@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
-<robot name="cube">
+<robot name="cylinder">
   <link name="base_link">
 
     <collision>
       <geometry>
-        <box size="5.0 3.0 1"/>
+        <mesh filename="obj/cylinder.obj" scale=".01 .01 .01"/>
       </geometry>
     </collision>
 
@@ -15,7 +15,7 @@
 
     <visual>
       <geometry>
-        <box size="4.1 1.8 1"/>
+        <mesh filename="obj/cylinder.obj" scale=".01 .01 .01"/>
       </geometry>
     </visual>
 

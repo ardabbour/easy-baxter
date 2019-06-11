@@ -69,7 +69,10 @@ class Camera(bxtr.CameraController):
     def close_other_cameras(self):
         """Closes other cameras to accomodate for the bandwith limitation."""
         for camera in self.other_cameras:
-            bxtr.CameraController(camera).close()
+            try:
+                bxtr.CameraController(camera).close()
+            except AttributeError:
+                rospy.INFO("Tried to close {} and failed".format(camera))
 
     def set_resolution(self, resolution):
         """Changes the resolution of the camera. For a list of valid resolution
@@ -180,9 +183,10 @@ class Arm(bxtr.Limb):
         self.move_to_pose(above_pick)
         self.move_to_pose(pick_pose)
         self.grip.close()
+        time.sleep(1)
         self.move_to_pose(above_pick)
         self.move_to_pose(above_place)
         self.move_to_pose(place_pose)
         self.grip.open()
-        time.sleep(0.2)
+        time.sleep(1)
         self.move_to_pose(above_place)
