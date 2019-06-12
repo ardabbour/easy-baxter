@@ -70,9 +70,9 @@ def obtain_arrangement(subscriber):
     cubes = rospy.wait_for_message(
         subscriber + "/cubes", numpy_msg(Floats)).data.tolist()
     cuboids = rospy.wait_for_message(
-        subscriber + "/cuboids", numpy_msg(Floats)).data.tolist()
+        subscriber + "/cylinders", numpy_msg(Floats)).data.tolist()
     long_cuboids = rospy.wait_for_message(
-        subscriber + "/long_cuboids", numpy_msg(Floats)).data.tolist()
+        subscriber + "/pluses", numpy_msg(Floats)).data.tolist()
 
     cubes = [round(elem, 2) for elem in cubes]
     cubes = [cubes[x:x+6] for x in range(0, len(cubes), 6)]
@@ -115,7 +115,7 @@ def main(node, subscriber, arm, initial_pose, gripper_height, x_offset, y_offset
 
             pick_pose = [pick_x, pick_y, initial_pose[2] -
                          gripper_height, np.pi, 0.0, pick_theta]
-            place_pose = [pick_pose[0]-0.25, pick_pose[1],
+            place_pose = [pick_pose[0]-0, pick_pose[1],
                           initial_pose[2] - gripper_height, np.pi, 0.0, pick_theta]
 
             limb.pick_and_place(pick_pose, place_pose)
@@ -140,7 +140,7 @@ if __name__ == "__main__":
                         type=str)
     PARSER.add_argument("--initial_pose", "-i",
                         help="Initial (sensing) pose of the arm.",
-                        default=[0.65, 0.4, 0.15, np.pi, 0.0, 0],
+                        default=[0.25, 0.9, 0.15, np.pi, 0.0, 0.0],
                         type=list)
     PARSER.add_argument("--gripper_height", "-g",
                         help="Distance of end-effector from picking pose in m.",
@@ -163,3 +163,6 @@ if __name__ == "__main__":
 
     main(ARGS.node, ARGS.subscriber, ARGS.arm, ARGS.initial_pose,
          ARGS.gripper_height, ARGS.x_offset, ARGS.y_offset, ARGS.theta_offset)
+
+# Main table pose: [0.65, 0.4, 0.15, np.pi, 0.0, 0.0]
+# Second table pose: [0.25, 0.9, 0.15, np.pi, 0.0, 0.0]

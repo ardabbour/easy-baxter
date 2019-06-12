@@ -44,6 +44,7 @@ def print_help():
     print "o/O: open gripper"
     print "c/C: close gripper"
 
+    print "p/P: get current pose"
 
 def main(node, arm, initial_pose, prismatic_increment, rotational_increment):
     """Executes the ROS node"""
@@ -104,7 +105,7 @@ def main(node, arm, initial_pose, prismatic_increment, rotational_increment):
                 limb.grip.close()
 
             # Info
-            elif char in ['t', 'T']:
+            elif char in ['p', 'P']:
                 print limb.get_pose()
 
             # Help

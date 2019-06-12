@@ -190,10 +190,10 @@ def process_image(raw):
     res_r = cv2.bitwise_and(image, image, mask=mask_r)
 
     # # Blue thresholding
-    # mask_b = cv2.inRange(hsv, LOWER_BLUE, UPPER_BLUE)
-    # mask_b = cv2.dilate(mask_b, kernel, iterations=2)
-    # mask_b = cv2.erode(mask_b, kernel, iterations=3)
-    # res_b = cv2.bitwise_and(image, image, mask=mask_b)
+    mask_b = cv2.inRange(hsv, LOWER_BLUE, UPPER_BLUE)
+    mask_b = cv2.dilate(mask_b, kernel, iterations=2)
+    mask_b = cv2.erode(mask_b, kernel, iterations=3)
+    res_b = cv2.bitwise_and(image, image, mask=mask_b)
 
     # Green thresholding
     mask_g = cv2.inRange(hsv, LOWER_GREEN, UPPER_GREEN)
@@ -212,8 +212,8 @@ def process_image(raw):
     long_cuboids = detect(res_r, dimensions, scale)
 
     # Combine all thresholded images
-    # combined = res_r + res_b + res_y
-    combined = res_r + res_g + res_y
+    combined = res_r + res_b + res_y
+    # combined = res_r + res_g + res_y
 
     return [cubes, cuboids, long_cuboids], combined
 
