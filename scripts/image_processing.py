@@ -37,8 +37,8 @@ ACTUAL_WIDTH = 43
 ACTUAL_HEIGHT = 20
 
 # HSV-based filtering ranges
-LOWER_BLUE = np.array([30, 50, 10])
-UPPER_BLUE = np.array([160, 255, 120])
+LOWER_BLUE = np.array([90, 80, 10])
+UPPER_BLUE = np.array([160, 255, 170])
 
 LOWER_GREEN = np.array([80, 100, 0])
 UPPER_GREEN = np.array([130, 255, 255])
@@ -81,10 +81,10 @@ def get_angle(rect_points):
     return ((my_angle)) % (2 * np.pi) - np.pi
 
 
-def detect(image, dimensions, scale):
+def detect(image, dimensions, scale, display):
     """Extracts the centroids and orientations of objects from the image."""
 
-    image = cv2.cvtColor(image, cv2.COLOR_HSV2BGR)
+    image = cv2.cvtColor(image, cv2.COLOR_HSV2BGR_FULL)
 
     # Extract edges from resulting image
     canny = cv2.Canny(image, 10, 80)
@@ -94,10 +94,10 @@ def detect(image, dimensions, scale):
     contours, _ = cv2.findContours(
         canny, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     for i in contours:
-        if cv2.contourArea(i) > 1000.0:
+        if cv2.contourArea(i) > 800.0:
             rect = cv2.minAreaRect(i)
-            box_points = cv2.boxPoints(rect)
-            moments = cv2.moments(np.intp(box_points))
+            box_points = np.intp(cv2.boxPoints(rect))
+            moments = cv2.moments(box_points)
 
             # Centroid Calculation for x and y coordinates
             center_x = float(moments['m10']/moments['m00']) - dimensions[0]/2.0
@@ -105,17 +105,13 @@ def detect(image, dimensions, scale):
             center_y = float(moments['m01']/moments['m00']) - dimensions[1]/2.0
             center_y = round(center_y * scale[1], 2)
 
-        # Angle Calculation for theta coordinate
+            # Angle Calculation for theta coordinate
             angle = round(get_angle(box_points), 2)
 
-            detected.append([[center_x, center_y, 6.5], [0.0, 0.0, angle]])
-            cv2.drawContours(
-                image, [np.intp(box_points)], 0, (255, 255, 255), 2)
-    cv2.namedWindow('Detection', cv2.WINDOW_NORMAL)
-    cv2.imshow('Detection', image)
-    cv2.waitKey(50)
+            detected.append([[-center_x, center_y, 6.5], [0.0, 0.0, angle]])
+            cv2.drawContours(display, [box_points], 0, (255, 255, 0), 2)
 
-    return detected
+    return detected, display
 
 
 def increase_contrast(image):
@@ -166,9 +162,17 @@ def process_image(raw):
 
     # Crop image to ROI
     image = raw[vertical[0]:vertical[1], horizontal[0]:horizontal[1]]
+    raw_cropped = image
     cv2.rectangle(raw, upper_left, bottom_right, (0, 0, 0), 2)
+
+    # rotate the image by 180 degrees
+    center = (width/2, height/2)
+    rotation_matrix = cv2.getRotationMatrix2D(center, 180, 1.0)
+    rotated_raw = cv2.warpAffine(
+        raw, rotation_matrix, (int(width), int(height)))
+
     cv2.namedWindow('Original', cv2.WINDOW_NORMAL)
-    cv2.imshow('Original', raw)
+    cv2.imshow('Original', rotated_raw)
     cv2.waitKey(5)
 
     # Remove noise from image
@@ -207,9 +211,19 @@ def process_image(raw):
     mask_y = cv2.erode(mask_y, kernel, iterations=3)
     res_y = cv2.bitwise_and(image, image, mask=mask_y)
 
-    cubes = detect(res_g, dimensions, scale)
-    cuboids = detect(res_y, dimensions, scale)
-    long_cuboids = detect(res_r, dimensions, scale)
+    cubes, display = detect(res_g, dimensions, scale, raw_cropped)
+    cuboids, display = detect(res_y, dimensions, scale, display)
+    long_cuboids, display = detect(res_r, dimensions, scale, display)
+
+    cv2.namedWindow('Detection', cv2.WINDOW_NORMAL)
+    # rotate the image by 180 degrees
+    height, width = display.shape[:2]
+    center = (width/2, height/2)
+    rotation_matrix = cv2.getRotationMatrix2D(center, 180, 1.0)
+    display = cv2.warpAffine(display, rotation_matrix,
+                             (int(width), int(height)))
+    cv2.imshow('Detection', display)
+    cv2.waitKey(50)
 
     # Combine all thresholded images
     combined = res_r + res_b + res_y
