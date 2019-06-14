@@ -14,14 +14,8 @@
 from argparse import ArgumentParser
 
 import rospy
-import roslib
-import rospkg
 
 import easy_baxter as eb
-
-PKG = 'easy_baxter'
-roslib.load_manifest(PKG)
-PKG_DIR = rospkg.RosPack().get_path(PKG)
 
 
 def print_help():
@@ -46,6 +40,7 @@ def print_help():
 
     print "p/P: get current pose"
 
+
 def main(node, arm, initial_pose, prismatic_increment, rotational_increment):
     """Executes the ROS node"""
 
@@ -53,9 +48,6 @@ def main(node, arm, initial_pose, prismatic_increment, rotational_increment):
     rospy.init_node(node)
     eb.enable_robot()
     limb = eb.Arm(arm)
-
-    # Smile!
-    eb.display_image(PKG_DIR + '/smiley.jpg')
 
     if not initial_pose:
         pass

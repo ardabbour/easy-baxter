@@ -16,16 +16,10 @@ from argparse import ArgumentParser
 import cv2
 
 import rospy
-import roslib
-import rospkg
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
 
 import easy_baxter as eb
-
-PKG = 'easy_baxter'
-roslib.load_manifest(PKG)
-PKG_DIR = rospkg.RosPack().get_path(PKG)
 
 
 def main(node, publisher, camera_index, camera_resolution):

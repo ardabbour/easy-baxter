@@ -23,7 +23,7 @@ from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
 from moveit_commander import conversions
 
-import baxter_interface as bxtr
+import baxter_interface as b
 import baxter_external_devices
 from baxter_core_msgs.srv import SolvePositionIK, SolvePositionIKRequest
 
@@ -31,7 +31,7 @@ from baxter_core_msgs.srv import SolvePositionIK, SolvePositionIKRequest
 def enable_robot():
     """Enables Baxter. Please untuck arms before this!"""
 
-    bxtr.RobotEnable().enable()
+    b.RobotEnable().enable()
 
 
 def get_char(timeout=0.01):
@@ -53,7 +53,7 @@ def display_image(image_path):
     rospy.sleep(1)
 
 
-class Camera(bxtr.CameraController):
+class Camera(b.CameraController):
     """Class to do basic functions with the camera. To initialize, need to
     specify camera: `left_hand_camera`, `right_hand_camera`, `head_camera`."""
 
@@ -62,15 +62,16 @@ class Camera(bxtr.CameraController):
         self.camera = camera
         all_cameras.remove(self.camera)
         self.other_cameras = all_cameras
-        self.close_other_cameras()
+        # self.close_other_cameras()
         self.publisher = '/cameras/' + self.camera + '/image'
-        bxtr.CameraController.__init__(self, camera)
+        b.CameraController.__init__(self, camera)
 
     def close_other_cameras(self):
         """Closes other cameras to accomodate for the bandwith limitation."""
         for camera in self.other_cameras:
+	    print camera
             try:
-                bxtr.CameraController(camera).close()
+                b.CameraController(camera).close()
             except AttributeError:
                 rospy.INFO("Tried to close {} and failed".format(camera))
 
@@ -89,12 +90,12 @@ class Camera(bxtr.CameraController):
         self.open()
 
 
-class Arm(bxtr.Limb):
+class Arm(b.Limb):
     """Class to control and do basic functions of a Baxter arm."""
 
     def __init__(self, limb):
-        bxtr.Limb.__init__(self, limb)
-        grip = bxtr.Gripper(limb)
+        b.Limb.__init__(self, limb)
+        grip = b.Gripper(limb)
         self.grip = grip
         self.grip.calibrate()
         self.grip.open()
@@ -183,10 +184,10 @@ class Arm(bxtr.Limb):
         self.move_to_pose(above_pick)
         self.move_to_pose(pick_pose)
         self.grip.close()
-        time.sleep(1)
+        time.sleep(2)
         self.move_to_pose(above_pick)
         self.move_to_pose(above_place)
         self.move_to_pose(place_pose)
         self.grip.open()
-        time.sleep(1)
+        time.sleep(2)
         self.move_to_pose(above_place)

@@ -18,16 +18,10 @@ import cv2
 import numpy as np
 
 import rospy
-import roslib
-import rospkg
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
 
 import easy_baxter as eb
-
-PKG = 'easy_baxter'
-roslib.load_manifest(PKG)
-PKG_DIR = rospkg.RosPack().get_path(PKG)
 
 
 def nothing(_):
@@ -65,16 +59,20 @@ def main(node_name, subscriber):
     # Initialize node
     rospy.init_node(node_name)
 
-    # Smile!
-    eb.display_image(PKG_DIR + '/smiley.jpg')
-
     # Initialize CV Bridge
     bridge = CvBridge()
 
     # Create a named window to calibrate HSV values in
-    cv2.namedWindow('Mask 1')
-    cv2.namedWindow('Mask 2')
-    cv2.namedWindow('Mask 1 OR Mask 2')
+
+    cv2.namedWindow('Mask 1', cv2.WINDOW_NORMAL)
+    cv2.namedWindow('Mask 2', cv2.WINDOW_NORMAL)
+    cv2.namedWindow('Mask 1 OR Mask 2', cv2.WINDOW_NORMAL)
+    cv2.namedWindow('Mask 1 AND Mask 2', cv2.WINDOW_NORMAL)
+
+    cv2.resizeWindow('Mask 1', (640,480))
+    cv2.resizeWindow('Mask 2', (640,480))
+    cv2.resizeWindow('Mask 2 OR Mask 2', (640,480))
+    cv2.resizeWindow('Mask 1 AND Mask 2', (640,480))
 
     # Creating track bars for Mask 1
     cv2.createTrackbar('H_low1', 'Mask 1', 0, 179, nothing)
@@ -140,16 +138,14 @@ def main(node_name, subscriber):
         mask1_or_mask2 = cv2.bitwise_or(mask1, mask2)
         mask1_and_mask2 = cv2.bitwise_and(mask1, mask2)
         result_mask1_or_mask2 = cv2.bitwise_and(raw, raw, mask=mask1_or_mask2)
-        result_mask1_and_mask2 = cv2.bitwise_and(raw, raw, mask=mask1_and_mask2)
+        result_mask1_and_mask2 = cv2.bitwise_and(
+            raw, raw, mask=mask1_and_mask2)
 
-        cv2.namedWindow('Mask 1', cv2.WINDOW_NORMAL)
         cv2.imshow('Mask 1', result_mask1)
-        cv2.namedWindow('Mask 2', cv2.WINDOW_NORMAL)
         cv2.imshow('Mask 2', result_mask2)
-        cv2.namedWindow('Mask 1 OR Mask 2', cv2.WINDOW_NORMAL)
         cv2.imshow('Mask 1 OR Mask 2', result_mask1_or_mask2)
-        cv2.namedWindow('Mask 1 AND Mask 2', cv2.WINDOW_NORMAL)
         cv2.imshow('Mask 1 AND Mask 2', result_mask1_and_mask2)
+
         k = cv2.waitKey(10)
         if k == 27:
             rospy.signal_shutdown("Esc pressed. Goodbye.")
