@@ -7,9 +7,9 @@ A collection of useful scripts for the operation of the Baxter Research Robot.
 | [Ubuntu](https://www.ubuntu.com/) | 16.04             |
 | [ROS](https://www.ros.org/)       | Kinetic Kame      |
 | [Python](https://www.python.org/) | 2.7.15            |
-| [pybullet](https://pybullet.org/) | 2.4.1             |
-| [numpy](https://www.numpy.org/)   | 1.16.0            |
-| [OpenCV](https://www.opencv.org/) | 4.0.0.21          |
+| [pybullet](https://pybullet.org/) | 2.5.1             |
+| [numpy](https://www.numpy.org/)   | 1.16.4            |
+| [OpenCV](https://www.opencv.org/) | 4.1.0.25          |
 
 ## About
 This repository is a ROS package that contains several scripts that
