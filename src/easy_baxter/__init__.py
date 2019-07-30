@@ -19,9 +19,9 @@ import numpy as np
 
 import rospy
 import tf
+import moveit_commander
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
-from moveit_commander import conversions
 
 import baxter_interface as b
 import baxter_external_devices
@@ -69,7 +69,7 @@ class Camera(b.CameraController):
     def close_other_cameras(self):
         """Closes other cameras to accomodate for the bandwith limitation."""
         for camera in self.other_cameras:
-	    print camera
+            print camera
             try:
                 b.CameraController(camera).close()
             except AttributeError:
@@ -96,11 +96,15 @@ class Arm(b.Limb):
     def __init__(self, limb):
         b.Limb.__init__(self, limb)
         grip = b.Gripper(limb)
+        self.limb = limb
         self.grip = grip
         self.grip.calibrate()
         self.grip.open()
         self.grip.set_moving_force(100)
         self.grip.set_holding_force(100)
+        self.robot = moveit_commander.RobotCommander()
+        self.planning_group = moveit_commander.MoveGroupCommander(
+            "{}_arm".format(limb))
 
     def get_pose(self, representation="euler"):
         """Acquires the pose of the endpoint of the limb and returns it as a
@@ -149,7 +153,8 @@ class Arm(b.Limb):
         """Determine the joint angles that provide a desired pose for the
         robot"s end-effector."""
 
-        quaternion_pose = conversions.list_to_pose_stamped(pose, "base")
+        quaternion_pose = moveit_commander.conversions.list_to_pose_stamped(
+            pose, "base")
 
         node = "ExternalTools/" + self.name + "/PositionKinematicsNode/IKService"
         ik_service = rospy.ServiceProxy(node, SolvePositionIK)
@@ -174,7 +179,7 @@ class Arm(b.Limb):
             sys.exit("ERROR: No valid joint configuration found. {}".format(pose))
 
     def pick_and_place(self, pick_pose, place_pose, height=0.15):
-        """Simple pick and place using poses."""
+        """Simple pick and place manually, using overhand grasps."""
 
         above_pick = [pick_pose[0], pick_pose[1],
                       height, np.pi, 0.0, pick_pose[-1]]
@@ -191,3 +196,43 @@ class Arm(b.Limb):
         self.grip.open()
         time.sleep(2)
         self.move_to_pose(above_place)
+
+    def pick_and_place_plan(self, pick_pose, place_pose, scene):
+        """
+        Generate a motion plan and execute it for pick and place using poses.
+
+        """
+
+        self.grip.open()
+        time.sleep(2)
+
+        def plan_to_pose(pose):
+            target_pose = moveit_commander.conversions.list_to_pose_stamped(
+                pick_pose, "world")
+
+            self.planning_group.set_pose_target(
+                target_pose, end_effector_link='{}_gripper'.format(self.limb))
+
+            plan = self.planning_group.plan()
+
+            return plan
+
+        pick_plan = plan_to_pose(pick_pose)
+
+        if not pick_plan.joint_trajectory.points:
+            print "[ERROR] No pick trajectory found"
+        else:
+            self.planning_group.go(wait=True)
+
+        self.grip.close()
+        time.sleep(2)
+
+        place_plan = plan_to_pose(place_pose)
+
+        if not pick_plan.joint_trajectory.points:
+            print "[ERROR] No place trajectory found"
+        else:
+            self.planning_group.go(wait=True)
+
+        self.grip.open()
+        time.sleep(2)
